@@ -1,10 +1,13 @@
 """
 Main script to run the UOKiK registry scraper.
 """
-from sqlalchemy.exc import IntegrityError
-from database import init_db, get_db
+import sys
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError, OperationalError
+from database import init_db, get_db, engine
 from models import KlauzulaNiedozwolona
 from scraper import scrape_all_pages
+from config import DATABASE_URL
 
 
 def save_entries_to_db(entries):
@@ -60,28 +63,62 @@ def save_entries_to_db(entries):
     return saved_count, skipped_count, error_count
 
 
+def test_database_connection():
+    """Test database connection before starting the scraper."""
+    print("Testing database connection...")
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1"))
+            result.fetchone()
+        print("✓ Database connection successful")
+        return True
+    except OperationalError as e:
+        print("✗ Failed to connect to database:")
+        print(f"  {e}")
+        print(f"\nDatabase URL: {DATABASE_URL.replace(':jakieshaslo@', ':***@')}")
+        print("\nPlease check:")
+        print("  1. Database server is running")
+        print("  2. Connection details in .env file are correct")
+        print("  3. Network connectivity to database server")
+        return False
+    except Exception as e:
+        print("✗ Unexpected error testing database connection:")
+        print(f"  {e}")
+        return False
+
+
 def main():
     """Main function to orchestrate the scraping and database operations."""
     print("=" * 60)
     print("UOKiK Unfair Contract Terms Scraper")
     print("=" * 60)
     
+    # Test database connection first
+    print("\n1. Testing database connection...")
+    if not test_database_connection():
+        print("\n✗ Aborting: Cannot connect to database")
+        sys.exit(1)
+    
     # Initialize database
-    print("\n1. Initializing database...")
-    init_db()
+    print("\n2. Initializing database...")
+    try:
+        init_db()
+    except Exception as e:
+        print(f"✗ Failed to initialize database: {e}")
+        sys.exit(1)
     
     # Scrape data
-    print("\n2. Scraping data from UOKiK registry...")
+    print("\n3. Scraping data from UOKiK registry...")
     entries = scrape_all_pages()
     
     if not entries:
-        print("\nNo entries found. Please check the scraper logic.")
-        return
+        print("\n✗ No entries found. Please check the scraper logic.")
+        sys.exit(1)
     
     print(f"\nFound {len(entries)} entries")
     
     # Save to database
-    print("\n3. Saving entries to database...")
+    print("\n4. Saving entries to database...")
     saved, skipped, errors = save_entries_to_db(entries)
     
     # Summary

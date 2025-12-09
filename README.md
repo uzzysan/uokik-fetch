@@ -33,6 +33,17 @@ cd rejestr_klauzul_scraper
 uv sync
 ```
 
+3. Skonfiguruj połączenie z bazą danych w pliku `.env`:
+```bash
+cp .env.example .env
+# Edytuj .env i ustaw DATABASE_URL
+```
+
+4. Zainicjalizuj bazę danych:
+```bash
+uv run init_database.py
+```
+
 ## Użycie
 
 Uruchom scraper:
@@ -41,10 +52,12 @@ uv run main.py
 ```
 
 Scraper automatycznie:
-1. Zainicjalizuje bazę danych SQLite
-2. Pobierze dane z rejestru UOKiK
+1. Zainicjalizuje bazę danych PostgreSQL (jeśli tabele nie istnieją)
+2. Pobierze dane z wszystkich stron rejestru UOKiK (~747 stron)
 3. Zapisze wpisy w bazie danych
 4. Wyświetli podsumowanie operacji
+
+**Uwaga**: Scraper używa opóźnień 2-5 sekund między żądaniami, aby nie przeciążać serwera UOKiK. Pełne scrapowanie zajmie około **40-60 minut**.
 
 ## Struktura projektu
 
@@ -61,10 +74,10 @@ rejestr_klauzul_scraper/
 
 ## Konfiguracja
 
-Możesz dostosować konfigurację tworząc plik `.env`:
+Konfigurację ustaw w pliku `.env`:
 
 ```env
-DATABASE_URL=sqlite:///klauzule_niedozwolone.db
+DATABASE_URL=postgresql://user:password@host:port/database_name
 ```
 
 ## Baza danych
