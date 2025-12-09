@@ -46,6 +46,8 @@ uv run init_database.py
 
 ## Użycie
 
+### Pełne scrapowanie (pierwsze uruchomienie)
+
 Uruchom scraper:
 ```bash
 uv run main.py
@@ -58,6 +60,21 @@ Scraper automatycznie:
 4. Wyświetli podsumowanie operacji
 
 **Uwaga**: Scraper pobiera pełną treść klauzul z podstron szczegółów (~7470 dodatkowych żądań). Używa opóźnień 2-5 sekund między stronami i 0.5-1.5s między szczegółami. Pełne scrapowanie zajmie około **3-4 godziny**.
+
+### Aktualizacja inkrementalna (pobieranie nowych wpisów)
+
+Po pierwszym pełnym scrapowaniu, możesz pobierać tylko nowe wpisy:
+```bash
+uv run update_new_entries.py
+```
+
+Skrypt aktualizacji:
+1. Sprawdza najwyższy numer wpisu w bazie danych
+2. Pobiera tylko nowsze wpisy z rejestru UOKiK (domyślnie sprawdza pierwsze 5 stron)
+3. Zapisuje nowe wpisy do bazy
+4. Wyświetla podsumowanie
+
+**Zaleta**: Znacznie szybsze (~1-2 minuty) - pobiera tylko nowe dane zamiast wszystkich ~7470 wpisów.
 
 ## Struktura projektu
 

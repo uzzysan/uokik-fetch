@@ -24,9 +24,14 @@ uv sync
 uv run init_database.py
 ```
 
-### Running the Scraper
+### Running the Scraper (Full)
 ```bash
 uv run main.py
+```
+
+### Running Incremental Update (New Entries Only)
+```bash
+uv run update_new_entries.py
 ```
 
 ### Activating Virtual Environment (if needed)
@@ -37,12 +42,13 @@ source .venv/bin/activate
 ## Architecture
 
 ### Data Flow
-1. **main.py** - Orchestrator: tests DB connection → initializes DB → calls scraper → saves entries → displays summary
-2. **scraper.py** - Web scraping logic: fetches HTML → parses BeautifulSoup → extracts data → returns list of dicts
-3. **database.py** - DB management: creates engine → provides session factory → initializes tables
-4. **models.py** - SQLAlchemy model: single table `klauzule_niedozwolone` with timestamps and indexes
-5. **config.py** - Environment config: loads .env → defines URLs, timeouts, headers
-6. **init_database.py** - Standalone initialization script with connection testing and table verification
+1. **main.py** - Full scraper: tests DB connection → initializes DB → scrapes all pages → saves incrementally → displays summary
+2. **update_new_entries.py** - Incremental updater: checks max entry in DB → fetches only newer entries → saves to DB
+3. **scraper.py** - Web scraping logic: fetches HTML → parses BeautifulSoup → extracts data → returns list of dicts
+4. **database.py** - DB management: creates engine → provides session factory → initializes tables
+5. **models.py** - SQLAlchemy model: single table `klauzule_niedozwolone` with timestamps and indexes
+6. **config.py** - Environment config: loads .env → defines URLs, timeouts, headers
+7. **init_database.py** - Standalone initialization script with connection testing and table verification
 
 ### Key Design Patterns
 - **Duplicate handling**: Check `numer_postanowienia` uniqueness before inserting (see `save_entries_to_db()`)
@@ -120,9 +126,18 @@ The main table shows truncated clause text. To get full text:
 - **Zagadnienie field**: Not extracted from table (may require detail page scraping)
 - **No tests**: No formal test suite (manual verification only)
 
+### Implemented Features
+- ✅ Full pagination support (~747 pages)
+- ✅ PostgreSQL database with connection testing
+- ✅ Rate limiting (respectful to server)
+- ✅ Full text extraction from detail pages
+- ✅ Incremental updates (update_new_entries.py)
+- ✅ Progress bar with statistics
+- ✅ Duplicate detection
+
 ### Future Enhancements May Need
 - Extract `zagadnienie` field (requires detail page scraping)
 - Add logging framework (currently uses print statements)
-- Implement incremental updates (only fetch new entries since last run)
 - Add retry logic for failed page requests
 - Make rate limiting configurable via environment variables
+- Add scheduling support (e.g., daily cron job for updates)
