@@ -8,7 +8,7 @@ from typing import List, Dict, Optional
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from config import UOKIK_MAIN_PAGE, REQUEST_TIMEOUT, REQUEST_HEADERS
+from config import UOKIK_BASE_URL, UOKIK_MAIN_PAGE, REQUEST_TIMEOUT, REQUEST_HEADERS
 
 
 def parse_date(date_str: str) -> Optional[datetime]:
@@ -92,7 +92,7 @@ def scrape_page(page_number: int = 0, quiet: bool = False) -> List[Dict]:
     for row in rows:
         cols = row.find_all('td')
         if len(cols) >= 9:  # We expect 9 columns
-            entry = extract_entry_from_row(cols)
+            entry = extract_entry_from_row(cols, row=row, fetch_full_text=True)
             if entry:
                 entries.append(entry)
     
@@ -138,7 +138,70 @@ def get_total_pages() -> int:
     return max_page
 
 
-def extract_entry_from_row(cols) -> Optional[Dict]:
+def fetch_full_text_from_detail_page(detail_id: str) -> Optional[str]:
+    """
+    Fetch the full text of prohibited clause from detail page.
+    
+    Args:
+        detail_id: The detail ID from data-url attribute (e.g., '7786')
+    
+    Returns:
+        Full text of the prohibited clause or None if error
+    """
+    try:
+        # Construct detail page URL
+        detail_url = f"{UOKIK_BASE_URL}/wyszukiwanie.php?details={detail_id}"
+        
+        # Fetch the detail page
+        html = fetch_page(detail_url)
+        if not html:
+            return None
+        
+        soup = BeautifulSoup(html, 'lxml')
+        
+        # Find the div with class that contains full text
+        # Structure: div.columns.small-12.large-8.large-offset-1.text > div.text > p
+        container = soup.find('div', class_='columns small-12 large-8 large-offset-1 text')
+        
+        if container:
+            # Find nested div.text
+            text_div = container.find('div', class_='text')
+            if text_div:
+                # Get all text content from paragraphs, clean it up
+                paragraphs = text_div.find_all('p')
+                full_text = ' '.join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
+                return full_text if full_text else None
+        
+        return None
+        
+    except Exception as e:
+        print(f"Error fetching detail page {detail_id}: {e}")
+        return None
+
+
+def extract_detail_id_from_row(row) -> Optional[str]:
+    """
+    Extract detail ID from table row's data-url attribute.
+    
+    Args:
+        row: BeautifulSoup row element
+    
+    Returns:
+        Detail ID string or None
+    """
+    try:
+        data_url = row.get('data-url', '')
+        # URL format: wyszukiwanie.php?details=7786#details
+        if 'details=' in data_url:
+            detail_id = data_url.split('details=')[1].split('#')[0]
+            return detail_id
+        return None
+    except Exception as e:
+        print(f"Error extracting detail ID: {e}")
+        return None
+
+
+def extract_entry_from_row(cols, row=None, fetch_full_text: bool = True) -> Optional[Dict]:
     """
     Extract entry data from table row columns.
     
@@ -149,9 +212,14 @@ def extract_entry_from_row(cols) -> Optional[Dict]:
     3: SĄD (court)
     4: POWÓD (plaintiff)
     5: POZWANY (defendant)
-    6: POSTANOWIENIE NIEDOZWOLONE (prohibited clause text)
+    6: POSTANOWIENIE NIEDOZWOLONE (prohibited clause text - truncated)
     7: DATA WPISU (entry date)
     8: BRANŻA (industry)
+    
+    Args:
+        cols: List of td elements
+        row: The tr element (needed to extract detail ID)
+        fetch_full_text: If True, fetch full text from detail page
     """
     try:
         # Extract numer_postanowienia from first column (LP)
@@ -160,11 +228,26 @@ def extract_entry_from_row(cols) -> Optional[Dict]:
         if not numer_postanowienia:
             return None
         
+        # Get truncated text from table
+        truncated_text = cols[6].get_text(strip=True) if len(cols) > 6 else None
+        
+        # Try to fetch full text from detail page
+        full_text = truncated_text  # Default to truncated text
+        
+        if fetch_full_text and row:
+            detail_id = extract_detail_id_from_row(row)
+            if detail_id:
+                fetched_text = fetch_full_text_from_detail_page(detail_id)
+                if fetched_text:
+                    full_text = fetched_text
+                # Small delay to avoid hammering the server
+                time.sleep(random.uniform(0.5, 1.5))
+        
         entry = {
             'numer_postanowienia': numer_postanowienia,
             'data_wyroku': parse_date(cols[1].get_text(strip=True)) if len(cols) > 1 else None,
             'sygnatura': cols[2].get_text(strip=True) if len(cols) > 2 else None,
-            'postanowienie_niedozwolone': cols[6].get_text(strip=True) if len(cols) > 6 else None,
+            'postanowienie_niedozwolone': full_text,
             'branza': cols[8].get_text(strip=True) if len(cols) > 8 else None,
             'powod': cols[4].get_text(strip=True) if len(cols) > 4 else None,
             'pozwany': cols[5].get_text(strip=True) if len(cols) > 5 else None,

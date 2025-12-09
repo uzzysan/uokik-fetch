@@ -57,7 +57,7 @@ Scraper automatycznie:
 3. Zapisze wpisy w bazie danych
 4. Wyświetli podsumowanie operacji
 
-**Uwaga**: Scraper używa opóźnień 2-5 sekund między żądaniami, aby nie przeciążać serwera UOKiK. Pełne scrapowanie zajmie około **40-60 minut**.
+**Uwaga**: Scraper pobiera pełną treść klauzul z podstron szczegółów (~7470 dodatkowych żądań). Używa opóźnień 2-5 sekund między stronami i 0.5-1.5s między szczegółami. Pełne scrapowanie zajmie około **3-4 godziny**.
 
 ## Struktura projektu
 

@@ -73,11 +73,19 @@ The scraper targets the `table.results` element with `tbody > tr.result_item` ro
 The scraper:
 1. Detects total pages by parsing `ul.paginate` links on the main page
 2. Iterates through all pages using URL pattern: `index.php?page=N&view=` (N is 0-indexed)
-3. Implements random delays (2-5 seconds) between page requests to avoid server overload
-4. Shows progress updates every 50 pages
-5. Currently processes ~747 pages with ~10 entries per page
+3. For each entry, fetches detail page to get full text (not truncated)
+4. Implements random delays (2-5 seconds) between pages and (0.5-1.5s) between detail page requests
+5. Shows progress updates every 50 pages
+6. Currently processes ~747 pages with ~10 entries per page = ~7470 detail pages
 
-**Estimated runtime**: ~40-60 minutes for full scrape (747 pages × 3.5s average delay)
+**Estimated runtime**: ~3-4 hours for full scrape (747 pages + 7470 detail pages with delays)
+
+### Full Text Extraction
+The main table shows truncated clause text. To get full text:
+- Extracts detail page ID from `data-url` attribute in table row
+- Fetches `wyszukiwanie.php?details=<ID>` for each entry
+- Parses full text from `div.text > p` elements
+- Adds 0.5-1.5s delay between detail requests
 
 ## Development Guidelines
 
