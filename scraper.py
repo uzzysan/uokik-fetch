@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 from config import UOKIK_MAIN_PAGE, REQUEST_TIMEOUT, REQUEST_HEADERS
 
 
@@ -45,27 +46,27 @@ def fetch_page(url: str, params: Optional[Dict] = None) -> Optional[str]:
         return None
 
 
-def scrape_page(page_number: int = 0) -> List[Dict]:
+def scrape_page(page_number: int = 0, quiet: bool = False) -> List[Dict]:
     """
     Scrape a specific page from the UOKiK registry.
     
     Args:
         page_number: Page number (0 for first page, 1 for second, etc.)
+        quiet: If True, suppress print statements
     
     Returns:
         List of dictionaries containing scraped data.
     """
     if page_number == 0:
         url = UOKIK_MAIN_PAGE
-        print(f"Fetching page 1 (main page)")
     else:
         url = f"{UOKIK_MAIN_PAGE}?page={page_number}&view="
-        print(f"Fetching page {page_number + 1}")
     
     html = fetch_page(url)
     
     if not html:
-        print(f"Failed to fetch page {page_number + 1}")
+        if not quiet:
+            print(f"Failed to fetch page {page_number + 1}")
         return []
     
     soup = BeautifulSoup(html, 'lxml')
@@ -75,13 +76,15 @@ def scrape_page(page_number: int = 0) -> List[Dict]:
     table = soup.find('table', class_='results')
     
     if not table:
-        print(f"No results table found on page {page_number + 1}")
+        if not quiet:
+            print(f"No results table found on page {page_number + 1}")
         return []
     
     # Extract rows from tbody
     tbody = table.find('tbody')
     if not tbody:
-        print(f"No tbody found on page {page_number + 1}")
+        if not quiet:
+            print(f"No tbody found on page {page_number + 1}")
         return []
     
     rows = tbody.find_all('tr', class_='result_item')
@@ -93,7 +96,6 @@ def scrape_page(page_number: int = 0) -> List[Dict]:
             if entry:
                 entries.append(entry)
     
-    print(f"  → Scraped {len(entries)} entries from page {page_number + 1}")
     return entries
 
 
@@ -175,38 +177,60 @@ def extract_entry_from_row(cols) -> Optional[Dict]:
         return None
 
 
-def scrape_all_pages() -> List[Dict]:
+def scrape_all_pages(save_callback=None):
     """
     Scrape all pages from the UOKiK registry.
     
     Implements random delays (2-5 seconds) between page requests
     to avoid overloading the server.
     
+    Args:
+        save_callback: Optional function to call after each page is scraped.
+                      Should accept a list of entries as parameter.
+    
     Returns:
-        List of all scraped entries from all pages.
+        Dictionary with scraping statistics.
     """
-    all_entries = []
+    total_entries = 0
+    total_saved = 0
+    total_skipped = 0
     
     # Detect total number of pages
     total_pages = get_total_pages()
     print(f"\nStarting to scrape {total_pages} pages...")
     print("(Using 2-5 second delays between requests to avoid server overload)\n")
     
-    # Scrape each page
-    for page_num in range(total_pages):
-        entries = scrape_page(page_num)
-        all_entries.extend(entries)
+    # Scrape each page with progress bar
+    with tqdm(total=total_pages, desc="Scraping", unit="page", 
+              bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]') as pbar:
         
-        # Progress update every 50 pages
-        if (page_num + 1) % 50 == 0:
-            print(f"\n✓ Progress: {page_num + 1}/{total_pages} pages scraped ({len(all_entries)} total entries)\n")
-        
-        # Add random delay between requests (except after the last page)
-        if page_num < total_pages - 1:
-            delay = random.uniform(2.0, 5.0)
-            time.sleep(delay)
+        for page_num in range(total_pages):
+            entries = scrape_page(page_num, quiet=True)
+            
+            # Save entries immediately if callback provided
+            if save_callback and entries:
+                result = save_callback(entries)
+                if result:
+                    saved, skipped = result
+                    total_saved += saved
+                    total_skipped += skipped
+            
+            total_entries += len(entries)
+            
+            # Update progress bar with statistics
+            pbar.set_postfix({
+                'entries': total_entries,
+                'saved': total_saved,
+                'skipped': total_skipped
+            })
+            pbar.update(1)
+            
+            # Add random delay between requests (except after the last page)
+            if page_num < total_pages - 1:
+                delay = random.uniform(2.0, 5.0)
+                time.sleep(delay)
     
     print(f"\n✓ Completed scraping all {total_pages} pages")
-    print(f"✓ Total entries collected: {len(all_entries)}")
+    print(f"✓ Total entries collected: {total_entries}")
     
-    return all_entries
+    return {'total_pages': total_pages, 'total_entries': total_entries}
