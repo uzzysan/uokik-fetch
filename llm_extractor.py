@@ -32,6 +32,7 @@ from config import (
     OLLAMA_URL,
     OLLAMA_MODEL,
     GEMINI_API_KEY,
+    GEMINI_MODEL,
     OPENAI_API_KEY,
     CLAUDE_API_KEY,
 )
@@ -205,7 +206,7 @@ def _gemini_extract(text: str) -> Dict:
         raise RuntimeError("GEMINI_API_KEY is not set.")
 
     _genai.configure(api_key=GEMINI_API_KEY)
-    model = _genai.GenerativeModel("gemini-1.5-flash")
+    model = _genai.GenerativeModel(GEMINI_MODEL)
     prompt = LLM_PROMPT_PL.format(text=text[:12000])
 
     try:

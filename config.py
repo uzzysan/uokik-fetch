@@ -42,9 +42,15 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1")
 
 # External API keys
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY", "")
 
 # OCR settings
 OCR_DPI = int(os.getenv("OCR_DPI", "300"))  # DPI for PDF->image conversion
 OCR_ENABLED = os.getenv("OCR_ENABLED", "true").lower() in ("1", "true", "yes")
+
+# --- Ingest web app (fairpact.pl/ingest) ---
+INGEST_PASSWORD = os.getenv("INGEST_PASSWORD", "")
+INGEST_SESSION_SECRET = os.getenv("INGEST_SESSION_SECRET", "")
+INGEST_UPLOAD_DIR = os.getenv("INGEST_UPLOAD_DIR", os.path.join(os.path.dirname(__file__), "uploads"))

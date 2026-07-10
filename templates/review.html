@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Weryfikacja — Ingest{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Weryfikacja danych</h1>
+  <p class="muted">Sprawdź i uzupełnij dane wyodrębnione z: <strong>{{ pdf_filename }}</strong>. Nic nie zostało jeszcze zapisane.</p>
+  {% if warning %}<div class="alert warn">{{ warning }}</div>{% endif %}
+  <form method="post" action="/ingest/save">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <input type="hidden" name="draft_id" value="{{ draft_id }}">
+    <input type="hidden" name="pdf_filename" value="{{ pdf_filename }}">
+    <h2>Dane decyzji (wspólne)</h2>
+    <div class="grid">
+      <div><label>Sygnatura akt</label><input name="sygnatura" value="{{ draft.sygnatura }}"></div>
+      <div><label>Data decyzji (RRRR-MM-DD)</label><input name="data_decyzji" value="{{ draft.data_decyzji }}" placeholder="2017-03-15"></div>
+      <div><label>Numer decyzji</label><input name="numer_decyzji" value="{{ draft.numer_decyzji }}"></div>
+      <div><label>Pozwany / przedsiębiorca</label><input name="pozwany" value="{{ draft.pozwany }}"></div>
+      <div><label>Powód</label><input name="powod" value="{{ draft.powod }}"></div>
+      <div><label>Branża</label><input name="branza" value="{{ draft.branza }}"></div>
+      <div><label>Region</label><input name="region" value="{{ draft.region }}"></div>
+    </div>
+    <h2>Klauzule niedozwolone</h2>
+    <table class="clauses" id="clauses">
+      <thead><tr><th style="width:56%">Treść postanowienia</th><th>Numer</th><th>Zagadnienie</th><th></th></tr></thead>
+      <tbody>
+      {% for k in draft.klauzule %}
+        <tr>
+          <td><textarea name="k_tresc" rows="3">{{ k.postanowienie_niedozwolone }}</textarea></td>
+          <td><input name="k_numer" value="{{ k.numer_postanowienia }}"></td>
+          <td><input name="k_zagadnienie" value="{{ k.zagadnienie }}"></td>
+          <td><button type="button" class="btn small ghost" onclick="rmRow(this)">✕</button></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div style="margin-top:10px"><button type="button" class="btn small" onclick="addRow()">+ Dodaj klauzulę</button></div>
+    <div class="actions">
+      <a class="btn ghost" href="/ingest">Anuluj</a>
+      <button class="btn primary" type="submit">Zapisz do bazy</button>
+    </div>
+  </form>
+</div>
+<template id="rowtpl">
+  <tr>
+    <td><textarea name="k_tresc" rows="3"></textarea></td>
+    <td><input name="k_numer"></td>
+    <td><input name="k_zagadnienie"></td>
+    <td><button type="button" class="btn small ghost" onclick="rmRow(this)">✕</button></td>
+  </tr>
+</template>
+<script>
+function addRow(){var t=document.getElementById('rowtpl');document.querySelector('#clauses tbody').appendChild(t.content.cloneNode(true));}
+function rmRow(b){var tb=document.querySelector('#clauses tbody');var tr=b.closest('tr');if(tb.rows.length>1){tr.remove();}else{tr.querySelectorAll('textarea,input').forEach(function(e){e.value='';});}}
+</script>
+{% endblock %}

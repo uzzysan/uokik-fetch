@@ -141,3 +141,6 @@ The main table shows truncated clause text. To get full text:
 - Add retry logic for failed page requests
 - Make rate limiting configurable via environment variables
 - Add scheduling support (e.g., daily cron job for updates)
+
+## Ingest webapp (fairpact.pl/ingest)
+Portal decyzji jest za WAF (Imperva) i blokuje `scrape_decyzje.py` ("Request Rejected" po submit), więc decyzje dodaje się ręcznie przez `ingest_app.py` (FastAPI; systemd `uokik-ingest` na `127.0.0.1:8010`; nginx `location /ingest`). `decision_extractor.extract_decision(text)` zwraca pola decyzji + listę klauzul (Gemini `GEMINI_MODEL`). Zapis: `klauzule_niedozwolone` (`source='manual'`) + `decyzje_uokik`/`decyzje_pdfs`. Lokalny start: `.venv/bin/uvicorn ingest_app:app --host 127.0.0.1 --port 8010`. Zależności systemowe: tesseract-ocr(+pol), poppler-utils, google-chrome-stable, xvfb.

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Zapisano — Ingest{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Zapisano ✓</h1>
+  <p>Decyzja: <strong>{{ numer_decyzji }}</strong></p>
+  <p>Dodane klauzule: <strong>{{ saved }}</strong>{% if skipped %} · pominięte duplikaty: <strong>{{ skipped }}</strong>{% endif %}</p>
+  <div class="actions"><a class="btn primary" href="/ingest">Prześlij kolejny PDF</a></div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Wgraj PDF — Ingest{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Prześlij decyzję (PDF)</h1>
+  <p class="muted">Plik zostanie przeanalizowany, a wyodrębnione dane pokażemy do weryfikacji przed zapisem do bazy.</p>
+  {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+  <form method="post" action="/ingest/upload" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <label>Plik PDF (max 30 MB)</label>
+    <input class="file" type="file" name="pdf" accept="application/pdf,.pdf" required>
+    <div class="actions"><button class="btn primary" type="submit">Analizuj</button></div>
+  </form>
+</div>
+{% endblock %}
