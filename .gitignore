@@ -33,3 +33,7 @@ Thumbs.db
 
 # Project specific
 klauzule_niedozwolone.db
+
+# Debug artifacts (not for repo)
+screenshot_*.png
+debug_*.html

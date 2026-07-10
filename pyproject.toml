@@ -10,5 +10,18 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "requests>=2.32.5",
     "sqlalchemy>=2.0.44",
+    "pypdf>=5.0.0",
+    "pdfplumber>=0.11.0",
     "tqdm>=4.66.0",
+    "undetected-chromedriver>=3.5.5",
+    "setuptools>=70.0.0",
+    # OCR
+    "pdf2image>=1.17.0",
+    "pytesseract>=0.3.13",
+    "pillow>=11.0.0",
+    # LLM integrations
+    "ollama>=0.3.0",
+    "google-generativeai>=0.8.0",
+    "openai>=1.50.0",
+    "anthropic>=0.39.0",
 ]
