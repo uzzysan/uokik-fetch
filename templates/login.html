@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Logowanie — Ingest{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Logowanie</h1>
+  <p class="muted">Podaj hasło dostępu, aby przesłać decyzję PDF.</p>
+  {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+  <form method="post" action="/ingest/login">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <label>Hasło</label>
+    <input type="password" name="password" autofocus required>
+    <div class="actions"><button class="btn primary" type="submit">Zaloguj</button></div>
+  </form>
+</div>
+{% endblock %}

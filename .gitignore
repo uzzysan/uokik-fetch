@@ -37,3 +37,8 @@ klauzule_niedozwolone.db
 # Debug artifacts (not for repo)
 screenshot_*.png
 debug_*.html
+
+# Ingest app runtime (do not commit uploaded PDFs / logs / local db)
+uploads/
+*.log
+*.db

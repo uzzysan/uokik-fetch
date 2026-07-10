@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}UOKiK Ingest{% endblock %}</title>
+<style>
+:root{--bg:#0f1216;--surface:#171b22;--surface2:#1e242d;--border:#2a313c;--text:#e6e9ef;--muted:#9aa4b2;--accent:#6ea8fe;--accent2:#34d399;--danger:#f87171;--warn:#fbbf24}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:24px 18px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 20px}
+.brand{font-weight:600;letter-spacing:.2px;color:var(--text)}
+.logout{color:var(--muted);text-decoration:none;font-size:14px}
+.logout:hover{color:var(--text)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 26px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.card.narrow{max-width:420px;margin:6vh auto 0}
+h1{font-size:22px;margin:0 0 6px}
+h2{font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:26px 0 12px;font-weight:600}
+.muted{color:var(--muted)}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+input,textarea{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font:inherit;outline:none}
+input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(110,168,254,.15)}
+textarea{resize:vertical}
+.file{padding:9px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
+.btn{display:inline-block;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:10px 16px;font:inherit;cursor:pointer;text-decoration:none;transition:.15s}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:#08101f;border-color:var(--accent);font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:6px 12px;font-size:13px}
+.btn.ghost{background:transparent}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+table.clauses{width:100%;border-collapse:collapse;margin-top:4px}
+table.clauses th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border)}
+table.clauses td{padding:8px 8px;vertical-align:top;border-bottom:1px solid var(--border)}
+.alert{border-radius:9px;padding:10px 14px;margin:14px 0;font-size:14px}
+.alert.error{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:#fecaca}
+.alert.warn{background:rgba(251,191,36,.10);border:1px solid rgba(251,191,36,.35);color:#fde68a}
+.foot{color:var(--muted);font-size:12px;text-align:center;margin-top:28px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">UOKiK · Ingest decyzji</div>
+    {% if request.session.get('authed') %}<a class="logout" href="/ingest/logout">Wyloguj</a>{% endif %}
+  </header>
+  {% block content %}{% endblock %}
+  <div class="foot">fairpact.pl/ingest</div>
+</div>
+</body>
+</html>

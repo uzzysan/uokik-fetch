@@ -249,3 +249,35 @@ Strona `decyzje.uokik.gov.pl` używa **Imperva TSPD** — zaawansowanego firewal
 ## Licencja
 
 MIT
+
+## Ingest — ręczne wgrywanie decyzji (fairpact.pl/ingest)
+
+Portal `decyzje.uokik.gov.pl` blokuje automatyczne pobieranie (Imperva WAF: „Request Rejected” po wysłaniu wyszukiwania), dlatego decyzje dodaje się ręcznie przez chroniony hasłem formularz WWW.
+
+- **URL:** https://fairpact.pl/ingest
+- **Usługa:** `uokik-ingest.service` (systemd) — `uvicorn ingest_app:app` na `127.0.0.1:8010`, za nginx (`location /ingest`).
+- **Pliki:** `ingest_app.py` (FastAPI), `decision_extractor.py` (ekstrakcja wielu klauzul + pól decyzji przez Gemini), `templates/` (ciemny, minimalistyczny UI).
+
+### Przepływ
+1. Logowanie hasłem (`INGEST_PASSWORD`).
+2. Upload PDF decyzji (max 30 MB).
+3. Ekstrakcja tekstu (pdfplumber → pypdf → OCR) + danych przez Gemini.
+4. **Ekran weryfikacji**: pola wspólne decyzji (sygnatura, data, numer, pozwany, powód, branża, region) + edytowalna tabela klauzul. Nic nie jest jeszcze zapisane do bazy.
+5. „Zapisz do bazy” → transakcyjny zapis:
+   - N× `klauzule_niedozwolone` (`source='manual'`) — od razu widoczne w aplikacji fairpact,
+   - prowenancja: `decyzje_uokik` + `decyzje_pdfs` + PDF na dysku (`uploads/`).
+   - deduplikacja po (sygnatura + treść klauzuli).
+
+### Konfiguracja (`.env` — NIE jest commitowany)
+- `INGEST_PASSWORD` — hasło dostępu (ustaw silne).
+- `INGEST_SESSION_SECRET` — sekret podpisu sesji.
+- `INGEST_UPLOAD_DIR` — katalog na PDF-y (domyślnie `/opt/uokik-fetch/uploads`).
+- `PARSER_BACKEND=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL` (domyślnie `gemini-3.1-flash-lite`).
+- `INGEST_COOKIE_SECURE` (opc., domyślnie `true`; `false` tylko do testów po HTTP).
+
+### Operacje
+```bash
+sudo systemctl status uokik-ingest
+sudo systemctl restart uokik-ingest   # po zmianie .env
+journalctl -u uokik-ingest -f
+```
