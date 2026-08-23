@@ -34,7 +34,8 @@ PROMPT_HEADER = (
     '  "region": "województwo/region jeśli podano",\n'
     '  "klauzule": [\n'
     '    {"postanowienie_niedozwolone": "pełna treść zakwestionowanego postanowienia",\n'
-    '     "numer_postanowienia": "numer/oznaczenie jeśli jest",\n'
+    '     "paragraf": "numer paragrafu lub artykułu, np. § 5, art. 4 — jeśli jest",\n'
+    '     "punkt": "numer punktu, ustępu, litery — jeśli jest",\n'
     '     "zagadnienie": "krótko czego dotyczy"}\n'
     '  ]\n'
     '}\n'
@@ -74,7 +75,8 @@ def extract_decision(text: str) -> Dict:
             continue
         klauzule.append({
             "postanowienie_niedozwolone": tresc,
-            "numer_postanowienia": _s(c.get("numer_postanowienia")),
+            "paragraf": _s(c.get("paragraf")),
+            "punkt": _s(c.get("punkt")),
             "zagadnienie": _s(c.get("zagadnienie")),
         })
     return {

@@ -16,6 +16,7 @@ class KlauzulaNiedozwolona(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     numer_postanowienia = Column(String(50), unique=True, nullable=False, index=True)
+    numer_decyzji = Column(String(50), nullable=True, index=True)
     data_wyroku = Column(Date, nullable=True, index=True)
     sygnatura = Column(String(100), nullable=True, index=True)
     postanowienie_niedozwolone = Column(Text, nullable=True)
@@ -24,6 +25,8 @@ class KlauzulaNiedozwolona(Base):
     pozwany = Column(String(500), nullable=True)
     data_wpisu = Column(Date, nullable=True)
     zagadnienie = Column(String(500), nullable=True)
+    paragraf = Column(String(50), nullable=True)
+    punkt = Column(String(50), nullable=True)
     source = Column(String(20), nullable=True, default='stary_rejestr')
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

@@ -681,12 +681,16 @@ def process_all_decisions(
                                 existing.branza = decyzja.branza
                                 existing.powod = result['extracted']['powod']
                                 existing.pozwany = pozwany
+                                existing.numer_decyzji = decyzja.numer_decyzji
+                                existing.paragraf = result['extracted'].get('paragraf')
+                                existing.punkt = result['extracted'].get('punkt')
                                 existing.source = 'decyzje_uokik'
                                 existing.updated_at = datetime.utcnow()
                                 stats['updated_in_db'] += 1
                             else:
                                 klauzula = KlauzulaNiedozwolona(
                                     numer_postanowienia=decyzja.numer_decyzji,
+                                    numer_decyzji=decyzja.numer_decyzji,
                                     data_wyroku=decyzja.data_wydania,
                                     sygnatura=decyzja.sygnatura_akt,
                                     postanowienie_niedozwolone=result['extracted']['postanowienie_niedozwolone'],
@@ -695,6 +699,8 @@ def process_all_decisions(
                                     pozwany=pozwany,
                                     data_wpisu=None,
                                     zagadnienie=None,
+                                    paragraf=result['extracted'].get('paragraf'),
+                                    punkt=result['extracted'].get('punkt'),
                                     source='decyzje_uokik',
                                 )
                                 db.add(klauzula)

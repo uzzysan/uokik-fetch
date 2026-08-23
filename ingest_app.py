@@ -137,7 +137,7 @@ async def upload(request: Request, pdf: UploadFile = File(...), csrf_token: str 
     else:
         warning = warning or "Pusty tekst PDF (mozliwy skan bez warstwy tekstowej). Uzupelnij recznie."
     if not draft.get("klauzule"):
-        draft["klauzule"] = [{"postanowienie_niedozwolone": "", "numer_postanowienia": "", "zagadnienie": ""}]
+        draft["klauzule"] = [{"postanowienie_niedozwolone": "", "paragraf": "", "punkt": "", "zagadnienie": ""}]
     return templates.TemplateResponse(request, "review.html", {"csrf": _csrf(request), "draft": draft, "draft_id": draft_id, "pdf_filename": pdf.filename or f"{draft_id}.pdf", "warning": warning})
 
 @app.post("/ingest/save", response_class=HTMLResponse)
@@ -162,7 +162,8 @@ async def save(request: Request):
         if dec[_f]:
             dec[_f] = dec[_f][:_n]
     tresci = form.getlist("k_tresc")
-    numery = form.getlist("k_numer")
+    paragrafy = form.getlist("k_paragraf")
+    punkty = form.getlist("k_punkt")
     zagad = form.getlist("k_zagadnienie")
     clauses = []
     for i, t in enumerate(tresci):
@@ -171,7 +172,8 @@ async def save(request: Request):
             continue
         clauses.append({
             "postanowienie_niedozwolone": t,
-            "numer_postanowienia": (numery[i].strip()[:50] if i < len(numery) else ""),
+            "paragraf": (paragrafy[i].strip()[:50] if i < len(paragrafy) else ""),
+            "punkt": (punkty[i].strip()[:50] if i < len(punkty) else ""),
             "zagadnienie": (zagad[i].strip()[:500] if i < len(zagad) else ""),
         })
     if not clauses:
@@ -206,12 +208,18 @@ async def save(request: Request):
             exists = db.query(KlauzulaNiedozwolona.id).filter_by(sygnatura=dec["sygnatura"] or None, postanowienie_niedozwolone=c["postanowienie_niedozwolone"]).first()
             if exists:
                 skipped += 1; continue
-            base = c["numer_postanowienia"] or f"MAN-{uuid.uuid4().hex[:10]}"
+            # numer_postanowienia = numer_decyzji (opcjonalnie + paragraf/punkt dla unikalności)
+            base = numer_decyzji
+            if c["paragraf"] or c["punkt"]:
+                base = f"{numer_decyzji} {c['paragraf']} {c['punkt']}".strip()
             db.add(KlauzulaNiedozwolona(
                 numer_postanowienia=_unique_numer(db, base), data_wyroku=ddate,
+                numer_decyzji=numer_decyzji,
                 sygnatura=dec["sygnatura"] or None, postanowienie_niedozwolone=c["postanowienie_niedozwolone"],
                 branza=dec["branza"] or None, powod=dec["powod"] or None, pozwany=dec["pozwany"] or None,
-                data_wpisu=today, zagadnienie=c["zagadnienie"] or None, source="manual",
+                data_wpisu=today, zagadnienie=c["zagadnienie"] or None,
+                paragraf=c["paragraf"] or None, punkt=c["punkt"] or None,
+                source="manual",
             ))
             saved += 1
         db.commit()

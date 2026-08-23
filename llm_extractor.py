@@ -83,12 +83,16 @@ Z tekstu wyciągnij:
 1. **postanowienie_niedozwolone** — dokładne brzmienie klauzuli niedozwolonej. Jeśli jest kilka, podaj najważniejszą lub wszystkie w jednym polu, rozdzielone średnikiem.
 2. **powod** — kto wszczął postępowanie (zazwyczaj "Prezes UOKiK" lub "Urząd Ochrony Konkurencji i Konsumentów").
 3. **pozwany** — nazwa firmy, przeciwko której wydano decyzję (pełna nazwa przedsiębiorcy).
+4. **paragraf** — numer paragrafu, artykułu lub sekcji w decyzji, w której znajduje się klauzula (np. "§ 5", "art. 4", puste jeśli brak).
+5. **punkt** — numer punktu, ustępu, litery — jeśli jest podany (puste jeśli brak).
 
 Odpowiedz **WYŁĄCZNIE** w formacie JSON, bez dodatkowego komentarza, markdown ani kodu. Przykład:
 {
   "postanowienie_niedozwolone": "Zakazane jest postanowienie umowne zwalniające przedsiębiorcę z odpowiedzialności za szkody wyrządzone konsumentowi.",
   "powod": "Prezes UOKiK",
-  "pozwany": "Przykładowa Spółka z o.o."
+  "pozwany": "Przykładowa Spółka z o.o.",
+  "paragraf": "§ 5",
+  "punkt": "ust. 2"
 }
 
 Jeśli nie możesz znaleźć któregoś pola, użyj wartości null.
@@ -148,6 +152,8 @@ def _normalise_llm_result(raw: Dict, backend_name: str) -> Dict:
         "postanowienie_niedozwolone": raw.get("postanowienie_niedozwolone") or raw.get("klauzula") or raw.get("clause") or raw.get("treść") or None,
         "powod": raw.get("powod") or raw.get("plaintiff") or raw.get("wnioskodawca") or "Prezes UOKiK",
         "pozwany": raw.get("pozwany") or raw.get("defendant") or raw.get("przedsiębiorca") or raw.get("firma") or None,
+        "paragraf": raw.get("paragraf") or raw.get("paragraph") or raw.get("artykuł") or raw.get("art") or None,
+        "punkt": raw.get("punkt") or raw.get("point") or raw.get("ustęp") or raw.get("letter") or None,
         "confidence": 0.90,
         "method": backend_name,
     }
@@ -191,6 +197,8 @@ def _ollama_extract(text: str) -> Dict:
             "postanowienie_niedozwolone": None,
             "powod": "Prezes UOKiK",
             "pozwany": None,
+            "paragraf": None,
+            "punkt": None,
             "confidence": 0.0,
             "method": f"ollama:{OLLAMA_MODEL}",
         }
@@ -224,6 +232,8 @@ def _gemini_extract(text: str) -> Dict:
             "postanowienie_niedozwolone": None,
             "powod": "Prezes UOKiK",
             "pozwany": None,
+            "paragraf": None,
+            "punkt": None,
             "confidence": 0.0,
             "method": "gemini:flash",
         }
@@ -260,6 +270,8 @@ def _openai_extract(text: str) -> Dict:
             "postanowienie_niedozwolone": None,
             "powod": "Prezes UOKiK",
             "pozwany": None,
+            "paragraf": None,
+            "punkt": None,
             "confidence": 0.0,
             "method": "openai:gpt-4o-mini",
         }
@@ -294,6 +306,8 @@ def _claude_extract(text: str) -> Dict:
             "postanowienie_niedozwolone": None,
             "powod": "Prezes UOKiK",
             "pozwany": None,
+            "paragraf": None,
+            "punkt": None,
             "confidence": 0.0,
             "method": "claude:haiku",
         }
