@@ -1,0 +1,50 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-uokik-fetch
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            echo "Deploying uokik-fetch..."
+
+            cd /opt/uokik-fetch
+            git fetch origin
+            git checkout main
+            git pull origin main
+
+            echo "Deployed commit: $(git rev-parse --short HEAD)"
+
+            ~/.local/bin/uv sync
+
+            sudo systemctl restart uokik-ingest.service
+            sleep 2
+            sudo systemctl is-active --quiet uokik-ingest.service && echo "Service active" || (echo "Service failed to start" && exit 1)
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            curl -sf http://127.0.0.1:8010/ingest > /dev/null && echo "Ingest app responding on :8010" || (echo "Ingest app health check failed" && exit 1)
